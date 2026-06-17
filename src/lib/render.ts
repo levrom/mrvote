@@ -43,12 +43,12 @@ export function renderHomePage(elections: ElectionListItem[], activeElectionId: 
     "Тайное голосование",
     `
       <section class="hero">
-        <div class="eyebrow">Cloudflare Pages · Pages Functions · D1</div>
+        <div class="eyebrow">Мирная Россия</div>
         <h1>Тайное голосование</h1>
       </section>
 
-      <div class="grid two">
-        <div class="card stack">
+      <div class="card stack">
+        <div>
           <h2>Доступные голосования</h2>
           <table>
             <thead>
@@ -64,10 +64,6 @@ export function renderHomePage(elections: ElectionListItem[], activeElectionId: 
             </thead>
             <tbody>${rows || `<tr><td colspan="7" class="muted">Пока нет голосований.</td></tr>`}</tbody>
           </table>
-        </div>
-
-        <div class="card stack">
-        </div>
       </div>
     `,
   );
