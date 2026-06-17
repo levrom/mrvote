@@ -67,12 +67,6 @@ export function renderHomePage(elections: ElectionListItem[], activeElectionId: 
         </div>
 
         <div class="card stack">
-          <div class="checks">
-            <div class="check-item"><span>1.</span><div>Одноразовый код открывает только бюллетень.</div></div>
-            <div class="check-item"><span>2.</span><div>При отправке голоса код гасится в одной SQL-операции.</div></div>
-            <div class="check-item"><span>3.</span><div>Протокол содержит только бюллетени и коды проверки.</div></div>
-            <div class="check-item"><span>4.</span><div>Админка защищена паролем из секретов Cloudflare.</div></div>
-          </div>
         </div>
       </div>
     `,
