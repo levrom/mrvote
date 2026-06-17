@@ -1,0 +1,11 @@
+.DS_Store
+.env
+.env.*
+.dev.vars
+.dev.vars.*
+.wrangler/
+.codex-ssh/
+node_modules/
+coverage/
+dist/
+.vite/

@@ -1,0 +1,15 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "secret-ballot",
+  "compatibility_date": "2026-06-17",
+  "pages_build_output_dir": "public",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "secret_ballot",
+      "database_id": "REPLACE_WITH_D1_DATABASE_ID",
+      "preview_database_id": "REPLACE_WITH_PREVIEW_D1_DATABASE_ID"
+    }
+  ]
+}
+
