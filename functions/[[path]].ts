@@ -166,6 +166,16 @@ async function handleAdminLoginPost(env: Env, request: Request): Promise<Respons
   if (!cookies.admin_csrf || cookies.admin_csrf !== csrfToken) {
     return new Response(renderAdminLoginPage("CSRF-проверка не пройдена.", cookies.admin_csrf || undefined), { headers: { "content-type": "text/html; charset=utf-8" }, status: 403 });
   }
+  const attempt = await rateLimitAttempt(new D1BallotRepository(env.DB), env, "admin-password", requestIp(request), {
+    limit: 3,
+    windowMs: 24 * 60 * 60 * 1000,
+  });
+  if (!attempt.allowed) {
+    return new Response(renderAdminLoginPage("Слишком много попыток. Попробуйте завтра.", cookies.admin_csrf || undefined), {
+      headers: { "content-type": "text/html; charset=utf-8" },
+      status: 429,
+    });
+  }
   if (password !== env.ADMIN_PASSWORD) {
     return new Response(renderAdminLoginPage("Неверный пароль.", cookies.admin_csrf || undefined), { headers: { "content-type": "text/html; charset=utf-8" }, status: 401 });
   }

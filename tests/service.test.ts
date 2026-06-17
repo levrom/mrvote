@@ -94,4 +94,18 @@ describe("vote service", () => {
     expect(result.allowed).toBe(false);
     expect(result.attempts).toBe(4);
   });
+
+  it("blocks admin password brute force after three attempts", async () => {
+    const result = await rateLimitAttempt(
+      createRepo({
+        recordAttempt: async () => 4,
+      }),
+      env,
+      "admin-password",
+      "203.0.113.11",
+      { limit: 3, windowMs: 24 * 60 * 60 * 1000 },
+    );
+    expect(result.allowed).toBe(false);
+    expect(result.attempts).toBe(4);
+  });
 });
