@@ -1,4 +1,4 @@
-import { summarizeProtocol, generateVerificationCode, prepareBallot, submitBallot } from "../src/lib/service";
+import { summarizeProtocol, generateVerificationCode, prepareBallot, rateLimitAttempt, submitBallot } from "../src/lib/service";
 import type { BallotRepository, ElectionWithOptions, VoteRecord } from "../src/lib/repo";
 
 function buildElection(status: "draft" | "active" | "stopped" | "closed" = "active"): ElectionWithOptions {
@@ -80,5 +80,18 @@ describe("vote service", () => {
     expect(protocol.totalVotes).toBe(2);
     expect(protocol.results[0].votes).toBe(1);
   });
-});
 
+  it("blocks home password brute force after three attempts", async () => {
+    const result = await rateLimitAttempt(
+      createRepo({
+        recordAttempt: async () => 4,
+      }),
+      env,
+      "home-password",
+      "203.0.113.10",
+      { limit: 3, windowMs: 24 * 60 * 60 * 1000 },
+    );
+    expect(result.allowed).toBe(false);
+    expect(result.attempts).toBe(4);
+  });
+});

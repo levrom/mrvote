@@ -124,9 +124,17 @@ export function summarizeProtocol(election: ElectionWithOptions, votes: VoteReco
   };
 }
 
-export async function rateLimitAttempt(repo: BallotRepository, env: Env, scope: string, requestIp: string): Promise<{ allowed: boolean; attempts: number }> {
-  const minuteBucket = Math.floor(Date.now() / 60_000);
+export async function rateLimitAttempt(
+  repo: BallotRepository,
+  env: Env,
+  scope: string,
+  requestIp: string,
+  options: { limit?: number; windowMs?: number } = {},
+): Promise<{ allowed: boolean; attempts: number }> {
+  const windowMs = options.windowMs ?? 60_000;
+  const limit = options.limit ?? 10;
+  const timeBucket = Math.floor(Date.now() / windowMs);
   const ipHash = await hashIp(requestIp, env.CODE_SALT);
-  const attempts = await repo.recordAttempt(scope, ipHash, minuteBucket);
-  return { allowed: attempts <= 10, attempts };
+  const attempts = await repo.recordAttempt(scope, ipHash, timeBucket);
+  return { allowed: attempts <= limit, attempts };
 }

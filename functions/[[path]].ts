@@ -117,6 +117,16 @@ async function handleHomePost(env: Env, request: Request): Promise<Response> {
   }
   const password = getFormValue(form, "password");
   if (password !== env.HOME_PASSWORD) {
+    const attempt = await rateLimitAttempt(new D1BallotRepository(env.DB), env, "home-password", requestIp(request), {
+      limit: 3,
+      windowMs: 24 * 60 * 60 * 1000,
+    });
+    if (!attempt.allowed) {
+      return new Response(renderHomeGatePage("Слишком много попыток. Попробуйте завтра.", cookies.home_csrf || undefined), {
+        headers: { "content-type": "text/html; charset=utf-8" },
+        status: 429,
+      });
+    }
     return new Response(renderHomeGatePage("Неверный пароль.", cookies.home_csrf || undefined), {
       headers: { "content-type": "text/html; charset=utf-8" },
       status: 401,
