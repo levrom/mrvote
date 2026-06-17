@@ -271,10 +271,10 @@ export class D1BallotRepository implements BallotRepository {
   }
 
   async claimAccessCodeAndCreateVote(input: ClaimVoteInput): Promise<boolean> {
-    const result = await this.db
-      .prepare(
-        `
-        WITH claimed AS (
+    const result = await this.db.batch([
+      this.db
+        .prepare(
+          `
           UPDATE access_codes
           SET status = 'used'
           WHERE election_id = ?
@@ -285,25 +285,21 @@ export class D1BallotRepository implements BallotRepository {
               FROM elections
               WHERE id = ? AND status = 'active'
             )
-          RETURNING election_id
+          `,
         )
-        INSERT INTO votes (id, election_id, ballot_json, verification_code, flow_marker)
-        SELECT ?, election_id, ?, ?, ?
-        FROM claimed
-        RETURNING id
-        `,
-      )
-      .bind(
-        input.electionId,
-        input.codeHash,
-        input.electionId,
-        randomId("vote_"),
-        input.ballotJson,
-        input.verificationCode,
-        input.flowMarker,
-      )
-      .all<{ id: string }>();
-    return result.results.length === 1;
+        .bind(input.electionId, input.codeHash, input.electionId),
+      this.db
+        .prepare(
+          `
+          INSERT INTO votes (id, election_id, ballot_json, verification_code, flow_marker)
+          SELECT ?, ?, ?, ?, ?
+          WHERE changes() = 1
+          `,
+        )
+        .bind(randomId("vote_"), input.electionId, input.ballotJson, input.verificationCode, input.flowMarker),
+    ]);
+
+    return Boolean(result[1]?.success && (result[1].meta?.changes ?? 0) === 1);
   }
 
   async findVoteByVerificationCode(electionId: string, verificationCode: string): Promise<VoteRecord | null> {

@@ -420,47 +420,64 @@ async function handleVoteGet(env: Env, request: Request, electionId: string): Pr
 
 async function handleVotePost(env: Env, request: Request, electionId: string): Promise<Response> {
   const secure = isSecureRequest(request);
-  const repo = new D1BallotRepository(env.DB);
-  const form = await request.formData();
-  const code = getFormValue(form, "code");
-  const cookies = parseCookies(request.headers.get("cookie"));
-  const csrfToken = getFormValue(form, "csrf_token");
-  if (!cookies.vote_entry_csrf || cookies.vote_entry_csrf !== csrfToken) {
+  try {
+    const repo = new D1BallotRepository(env.DB);
+    const form = await request.formData();
+    const code = getFormValue(form, "code");
+    const cookies = parseCookies(request.headers.get("cookie"));
+    const csrfToken = getFormValue(form, "csrf_token");
+    if (!cookies.vote_entry_csrf || cookies.vote_entry_csrf !== csrfToken) {
+      const election = await repo.getElectionWithOptions(electionId);
+      if (!election) {
+        return new Response("Голосование не найдено.", { status: 404 });
+      }
+      return new Response(renderAccessCodeFormPage(election, "CSRF-проверка не пройдена.", cookies.vote_entry_csrf || undefined), {
+        headers: { "content-type": "text/html; charset=utf-8" },
+        status: 403,
+      });
+    }
+
+    const attempt = await rateLimitAttempt(repo, env, "vote-code", requestIp(request));
+    if (!attempt.allowed) {
+      return new Response("Слишком много попыток. Подождите минуту и попробуйте снова.", { status: 429 });
+    }
+
+    const result = await prepareBallot(repo, env, electionId, code);
+    if (!result.ok) {
+      const election = await repo.getElectionWithOptions(electionId);
+      if (!election) {
+        return new Response("Голосование не найдено.", { status: 404 });
+      }
+      return new Response(renderAccessCodeFormPage(election, result.message, cookies.vote_entry_csrf || undefined), {
+        headers: { "content-type": "text/html; charset=utf-8" },
+        status: result.status,
+      });
+    }
+
+    const ballotCsrfToken = await createTicketCsrf();
+    const response = new Response(renderBallotPage(result.data.election, result.data.ticket, ballotCsrfToken), {
+      headers: { "content-type": "text/html; charset=utf-8" },
+    });
+    response.headers.append("set-cookie", voteTicketCookie(result.data.ticket, secure));
+    response.headers.append("set-cookie", voteCsrfCookie(ballotCsrfToken, secure, "vote_csrf"));
+    response.headers.append("set-cookie", deleteCookieHeader("vote_entry_csrf", secure));
+    return response;
+  } catch (error) {
+    console.error("vote submission failed", error);
+    const repo = new D1BallotRepository(env.DB);
     const election = await repo.getElectionWithOptions(electionId);
     if (!election) {
       return new Response("Голосование не найдено.", { status: 404 });
     }
-    return new Response(renderAccessCodeFormPage(election, "CSRF-проверка не пройдена.", cookies.vote_entry_csrf || undefined), {
-      headers: { "content-type": "text/html; charset=utf-8" },
-      status: 403,
+    const fallbackCsrf = randomToken(18);
+    return new Response(renderAccessCodeFormPage(election, "Не удалось открыть бюллетень. Попробуйте ещё раз.", fallbackCsrf), {
+      headers: {
+        "content-type": "text/html; charset=utf-8",
+        "set-cookie": cookieHeader("vote_entry_csrf", fallbackCsrf, { maxAge: 900, sameSite: "Lax", secure }),
+      },
+      status: 500,
     });
   }
-
-  const attempt = await rateLimitAttempt(repo, env, "vote-code", requestIp(request));
-  if (!attempt.allowed) {
-    return new Response("Слишком много попыток. Подождите минуту и попробуйте снова.", { status: 429 });
-  }
-
-  const result = await prepareBallot(repo, env, electionId, code);
-  if (!result.ok) {
-    const election = await repo.getElectionWithOptions(electionId);
-    if (!election) {
-      return new Response("Голосование не найдено.", { status: 404 });
-    }
-    return new Response(renderAccessCodeFormPage(election, result.message, cookies.vote_entry_csrf || undefined), {
-      headers: { "content-type": "text/html; charset=utf-8" },
-      status: result.status,
-    });
-  }
-
-  const ballotCsrfToken = await createTicketCsrf();
-  const response = new Response(renderBallotPage(result.data.election, result.data.ticket, ballotCsrfToken), {
-    headers: { "content-type": "text/html; charset=utf-8" },
-  });
-  response.headers.append("set-cookie", voteTicketCookie(result.data.ticket, secure));
-  response.headers.append("set-cookie", voteCsrfCookie(ballotCsrfToken, secure, "vote_csrf"));
-  response.headers.append("set-cookie", deleteCookieHeader("vote_entry_csrf", secure));
-  return response;
 }
 
 async function handleBallotGet(env: Env, request: Request, electionId: string): Promise<Response> {
