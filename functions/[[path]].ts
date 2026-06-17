@@ -2,7 +2,7 @@ import { cookieHeader, deleteCookieHeader, escapeHtml, formTokenInput, parseCook
 import { generateHumanCode, openJson, randomId, randomToken, sealJson } from "../src/lib/core";
 import { D1BallotRepository, hashCodeInput, type Env, splitOptionsFromText } from "../src/lib/repo";
 import { prepareBallot, rateLimitAttempt, submitBallot, summarizeProtocol, verifyByCode } from "../src/lib/service";
-import { renderAccessCodeFormPage, renderAdminDashboardPage, renderAdminLoginPage, renderBallotPage, renderElectionCreatePage, renderElectionDetailPage, renderHomePage, renderProtocolPage, renderVerifiedBallotPage, renderVerificationLookupPage, renderVoteSuccessPage } from "../src/lib/render";
+import { renderAccessCodeFormPage, renderAdminDashboardPage, renderAdminLoginPage, renderBallotPage, renderElectionCreatePage, renderElectionDetailPage, renderHomeGatePage, renderHomePage, renderProtocolPage, renderVerifiedBallotPage, renderVerificationLookupPage, renderVoteSuccessPage } from "../src/lib/render";
 
 type PagesContext = {
   request: Request;
@@ -76,11 +76,57 @@ function clearCookieSet(names: string[], secure: boolean): string[] {
   return names.map((name) => deleteCookieHeader(name, secure));
 }
 
-async function handleHome(env: Env): Promise<Response> {
+async function handleHomeGet(env: Env, request: Request): Promise<Response> {
+  const secure = isSecureRequest(request);
   const repo = new D1BallotRepository(env.DB);
+  const cookies = parseCookies(request.headers.get("cookie"));
+  const gatePassword = env.HOME_PASSWORD;
+  const auth = cookies.home_auth ? await openJson<{ password: string; exp: number }>(cookies.home_auth, env.APP_SECRET) : null;
+  if (gatePassword) {
+    if (!auth || auth.exp <= Date.now() || auth.password !== gatePassword) {
+      const csrfToken = cookies.home_csrf || randomToken(18);
+      return new Response(renderHomeGatePage(undefined, csrfToken), {
+        headers: {
+          "content-type": "text/html; charset=utf-8",
+          "set-cookie": cookieHeader("home_csrf", csrfToken, { maxAge: 43200, sameSite: "Lax", secure }),
+        },
+      });
+    }
+  }
   const elections = await repo.listElections();
   const activeElection = elections.find((item) => item.status === "active") ?? null;
   return new Response(renderHomePage(elections, activeElection?.id ?? null), { headers: { "content-type": "text/html; charset=utf-8" } });
+}
+
+async function handleHomePost(env: Env, request: Request): Promise<Response> {
+  const secure = isSecureRequest(request);
+  const cookies = parseCookies(request.headers.get("cookie"));
+  const form = await request.formData();
+  const csrfToken = getFormValue(form, "csrf_token");
+  if (!cookies.home_csrf || cookies.home_csrf !== csrfToken) {
+    return new Response(renderHomeGatePage("CSRF-проверка не пройдена.", cookies.home_csrf || undefined), {
+      headers: { "content-type": "text/html; charset=utf-8" },
+      status: 403,
+    });
+  }
+  if (!env.HOME_PASSWORD) {
+    return new Response(renderHomeGatePage("Пароль для главной не задан.", cookies.home_csrf || undefined), {
+      headers: { "content-type": "text/html; charset=utf-8" },
+      status: 500,
+    });
+  }
+  const password = getFormValue(form, "password");
+  if (password !== env.HOME_PASSWORD) {
+    return new Response(renderHomeGatePage("Неверный пароль.", cookies.home_csrf || undefined), {
+      headers: { "content-type": "text/html; charset=utf-8" },
+      status: 401,
+    });
+  }
+  const auth = await sealJson({ password: env.HOME_PASSWORD, exp: Date.now() + 12 * 60 * 60 * 1000 }, env.APP_SECRET);
+  const response = redirect("/");
+  response.headers.append("set-cookie", cookieHeader("home_auth", auth, { maxAge: 43200, sameSite: "Lax", secure }));
+  response.headers.append("set-cookie", deleteCookieHeader("home_csrf", secure));
+  return response;
 }
 
 async function handleAdminLoginGet(env: Env, request: Request): Promise<Response> {
@@ -508,7 +554,10 @@ export async function onRequest(context: PagesContext): Promise<Response> {
   const segments = path.split("/").filter(Boolean);
 
   if (method === "GET" && path === "/") {
-    return handleHome(env);
+    return handleHomeGet(env, request);
+  }
+  if (method === "POST" && path === "/") {
+    return handleHomePost(env, request);
   }
 
   if (segments[0] === "admin") {

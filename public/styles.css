@@ -5,8 +5,8 @@
   --text: #142033;
   --muted: #65748b;
   --line: #d7deea;
-  --brand: #1747d1;
-  --brand-strong: #1036a4;
+  --brand: #313ab8;
+  --brand-strong: #28339b;
   --success: #0b8f5a;
   --danger: #bb2a2a;
   --warning: #8a5a00;
@@ -203,8 +203,8 @@ textarea {
 input:focus,
 textarea:focus,
 select:focus {
-  outline: 2px solid rgba(23, 71, 209, 0.18);
-  border-color: rgba(23, 71, 209, 0.5);
+  outline: 2px solid rgba(49, 58, 184, 0.18);
+  border-color: rgba(49, 58, 184, 0.5);
 }
 
 .actions {
@@ -239,7 +239,7 @@ button:hover,
 .button.secondary {
   background: #eef3ff;
   color: var(--brand);
-  border-color: rgba(23, 71, 209, 0.15);
+  border-color: rgba(49, 58, 184, 0.15);
 }
 
 .button.secondary:hover {
@@ -342,4 +342,3 @@ pre {
   color: var(--muted);
   font-size: 14px;
 }
-

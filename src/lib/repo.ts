@@ -8,6 +8,7 @@ export interface Env {
   ADMIN_PASSWORD: string;
   APP_SECRET: string;
   CODE_SALT: string;
+  HOME_PASSWORD?: string;
 }
 
 export interface ElectionRecord {

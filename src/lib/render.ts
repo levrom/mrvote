@@ -69,6 +69,31 @@ export function renderHomePage(elections: ElectionListItem[], activeElectionId: 
   );
 }
 
+export function renderHomeGatePage(error?: string, csrfToken?: string): string {
+  return layout(
+    "Вход на главную",
+    `
+      <section class="hero">
+        <div class="eyebrow">Мирная Россия</div>
+        <h1>Тайное голосование</h1>
+      </section>
+      <div class="card stack" style="max-width: 540px;">
+        ${error ? renderNotice("error", error) : ""}
+        <form method="post" action="/">
+          <div class="stack">
+            ${csrfToken ? formTokenInput("csrf_token", csrfToken) : ""}
+            <label>
+              Пароль для входа
+              <input type="password" name="password" autocomplete="current-password" required />
+            </label>
+            <button type="submit">Войти</button>
+          </div>
+        </form>
+      </div>
+    `,
+  );
+}
+
 export function renderAdminLoginPage(error?: string, csrfToken?: string): string {
   return layout(
     "Вход в админку",
@@ -117,7 +142,6 @@ export function renderAdminDashboardPage(elections: ElectionListItem[]): string 
       <section class="hero">
         <div class="eyebrow">Администрирование</div>
         <h1>Счётная комиссия</h1>
-        <p>Создавайте голосования, выдавайте коды и формируйте протоколы без скрытых связок между кодом доступа и бюллетенем.</p>
       </section>
 
       <div class="actions" style="margin-bottom: 18px;">
