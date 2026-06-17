@@ -7,9 +7,8 @@
     {
       "binding": "DB",
       "database_name": "secret_ballot",
-      "database_id": "REPLACE_WITH_D1_DATABASE_ID",
-      "preview_database_id": "REPLACE_WITH_PREVIEW_D1_DATABASE_ID"
+      "database_id": "18a187d3-f6f8-446d-9072-8be3a4193cb9",
+      "preview_database_id": "18a187d3-f6f8-446d-9072-8be3a4193cb9"
     }
   ]
 }
-
