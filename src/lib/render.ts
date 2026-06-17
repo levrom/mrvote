@@ -44,8 +44,7 @@ export function renderHomePage(elections: ElectionListItem[], activeElectionId: 
     `
       <section class="hero">
         <div class="eyebrow">Cloudflare Pages · Pages Functions · D1</div>
-        <h1>Тайное голосование без связи между кодом доступа и бюллетенем</h1>
-        <p>Публичный интерфейс для участников и отдельная админка для счётной комиссии. Голос хранится отдельно от одноразового кода доступа.</p>
+        <h1>Тайное голосование</h1>
       </section>
 
       <div class="grid two">
@@ -68,15 +67,11 @@ export function renderHomePage(elections: ElectionListItem[], activeElectionId: 
         </div>
 
         <div class="card stack">
-          <h2>Что умеет система</h2>
           <div class="checks">
             <div class="check-item"><span>1.</span><div>Одноразовый код открывает только бюллетень.</div></div>
             <div class="check-item"><span>2.</span><div>При отправке голоса код гасится в одной SQL-операции.</div></div>
             <div class="check-item"><span>3.</span><div>Протокол содержит только бюллетени и коды проверки.</div></div>
             <div class="check-item"><span>4.</span><div>Админка защищена паролем из секретов Cloudflare.</div></div>
-          </div>
-          <div class="actions">
-            <a class="button secondary" href="/admin">Открыть админку</a>
           </div>
         </div>
       </div>
@@ -91,7 +86,6 @@ export function renderAdminLoginPage(error?: string, csrfToken?: string): string
       <section class="hero">
         <div class="eyebrow">Администрирование</div>
         <h1>Вход в админку</h1>
-        <p>Пароль задаётся через Cloudflare Pages secrets.</p>
       </section>
       <div class="card stack" style="max-width: 540px;">
         ${error ? renderNotice("error", error) : ""}
