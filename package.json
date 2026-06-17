@@ -5,6 +5,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json --noEmit",
     "dev": "wrangler pages dev public --compatibility-date=2026-06-17",
+    "deploy:pages": "wrangler pages deploy public --project-name=mrvote",
     "test": "vitest run",
     "test:watch": "vitest"
   },
@@ -15,4 +16,3 @@
     "wrangler": "^4.21.1"
   }
 }
-

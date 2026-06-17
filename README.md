@@ -22,6 +22,16 @@ npm test
 npm run dev
 ```
 
+## Деплой на Cloudflare Pages
+
+Для Pages проекта используйте:
+
+```bash
+npm run deploy:pages
+```
+
+Не используйте `wrangler deploy` для этого репозитория: это команда для Worker-проекта, а здесь нужен Pages-деплой из папки `public`.
+
 ## Переменные окружения
 
 - `ADMIN_PASSWORD` - пароль для админки.
@@ -31,4 +41,3 @@ npm run dev
 ## D1
 
 Схема лежит в [`schema.sql`](./schema.sql). Для локальной разработки поднимите D1 binding в `wrangler.jsonc` и выполните схему через Wrangler.
-
