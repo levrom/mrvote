@@ -294,11 +294,6 @@ export function renderElectionDetailPage(
           </form>
         </div>
       </div>
-
-      <div class="card stack" style="margin-top: 18px;">
-        <h2>Подсказка для комиссии</h2>
-        <p>Коды доступа можно выдавать только в открытом виде при генерации CSV. После этого в базе остаются только хэши.</p>
-      </div>
     `,
   );
 }
@@ -456,7 +451,6 @@ export function renderVerifiedBallotPage(election: ElectionWithOptions, vote: Vo
       <section class="hero">
         <div class="eyebrow">Проверка</div>
         <h1>Бюллетень найден</h1>
-        <p>Код проверки подтверждает, что бюллетень учтён. Access code здесь не хранится и не показывается.</p>
       </section>
       <div class="card stack">
         <div class="notice success">Код проверки: <strong>${escapeHtml(toDisplayCode(vote.verification_code))}</strong></div>
